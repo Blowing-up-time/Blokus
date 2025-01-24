@@ -9,6 +9,8 @@ class Player:
         self.color = color
         self.pieces: List[Piece] = []
 
+        self.game_over = False
+
         for name, shape in PIECES.items():
             self.pieces.append(Piece(name, shape))
     

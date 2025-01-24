@@ -7,9 +7,11 @@ class Board:
         self.board = [[0 for _ in range(20)] for _ in range(20)]
     
     def place_piece(self, piece: Piece, x: int, y: int, playerId: int, firstTurn: bool) -> bool:
+        """
+        Returns true if successfully placed the piece
+        """
         if self.is_valid_move(piece, x, y, playerId, firstTurn):
             # place piece
-            print("VALID MOVE!!!")
 
             for dy, dx in piece.shape:
                 self.board[dy+y][dx+x] += playerId
@@ -53,8 +55,9 @@ class Board:
         for dy, dx in piece.shape:
             vectors = [(-1,-1), (-1,1), (1,-1), (1,1)]
             for vy, vx in vectors:
-                if self.board[y+dy+vy][x+dx+vx]:
-                    return True
+                if 0 <= (y+dy+vy) < len(self.board) and 0 <= (x+dx+vx) < len(self.board):
+                    if self.board[y+dy+vy][x+dx+vx] == playerId:
+                        return True
         return False
 
 
@@ -68,6 +71,7 @@ class Board:
                 if self.board[ay][ax] != 0:
                     return True
                 for vx, vy in vectors:
-                    if self.board[vy+ay][vx+ax] == playerId:
-                        return True
+                    if 0 <= (vx+ax) < len(self.board) and 0 <= (vy+ay) < len(self.board):
+                        if self.board[vy+ay][vx+ax] == playerId:
+                            return True
         return False

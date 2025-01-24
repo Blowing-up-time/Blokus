@@ -7,29 +7,29 @@ from piece import Piece
 
 
 
-
-    
-
-
-
 class Blokus:
 
-    def __init__(self, players: List[Player], width, height, ui_config):
+    """
+    
+    """
+
+    def __init__(self, players: List[Player], width: int, height: int, ui_config: dict):
         if not pygame.get_init():
             pygame.init()
+        
         self.ui_config = ui_config
         self.players = players
         self.current_player = 0
         self.display = pygame.display.set_mode((width, height))
         self.display.fill(WHITE)
         self.selected = None
+        self.selected_name = None
         self.turncount = 0
 
         self.board = Board()
         self.update_display()
 
 
-        self.selected_piece = None
     
     def update_display(self):
         pygame.display.flip()
@@ -42,7 +42,7 @@ class Blokus:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 for piece in self.players[self.current_player].pieces:
                     if piece.check_collision(event.pos[0], event.pos[1]):
-                        self.selected_piece = piece.name
+                        self.selected_name = piece.name
                         self.selected = Piece(piece.name, piece.shape)
                         #print("Collision")
             if self.selected is not None:
@@ -58,16 +58,41 @@ class Blokus:
                     
 
                     if event.key == pygame.K_SPACE:
-                        # place piece logic.
+                        # if move is successful
+                        if self.make_player_move():
+                            self.next_player()
+
                         
-                        _x, _y = pygame.mouse.get_pos()
-                        x, y = self.snap_xy_to_grid(_x, _y)
-                        gridx, gridy = self.to_grid_coords(x, y)
-                        # TODO: Add logic for switching players after this.
-                        self.board.place_piece(self.selected, gridx, gridy, self.players[self.current_player].id, (self.turncount == 0))
-                        self.turncount += 1
+                        
                         print("K_SPACE")
 
+
+    def next_player(self):
+        if not self.is_game_over():
+            # remove players piece
+            # clear currently selected
+            # move up players
+            # increase the turncount if its gone full circle
+            self.players[self.current_player].remove_piece(self.selected_name)
+
+            self.selected_name = None
+            self.selected = None
+
+            self.current_player += 1
+            if self.current_player >= len(self.players):
+                self.current_player = 0
+                self.turncount += 1
+            pass
+
+    def make_player_move(self):
+        
+        _x, _y = pygame.mouse.get_pos()
+        x, y = self.snap_xy_to_grid(_x, _y)
+        gridx, gridy = self.to_grid_coords(x, y)
+        # TODO: Add logic for switching players after this.
+
+        return self.board.place_piece(self.selected, gridx, gridy, self.players[self.current_player].id, (self.turncount == 0))
+        
     
     def get_player_color(self, id):
 
@@ -119,7 +144,7 @@ class Blokus:
             yoffset = self.ui_config['remaining_offset']
             for piece in player.pieces:
                 color = player.color if n == self.current_player else GREY
-                if piece.name != self.selected_piece:
+                if piece.name != self.selected_name:
                     color = color.grayscale()
                 #print(piece.shape)
                 minY = min([c[0] for c in piece.shape])
@@ -129,9 +154,11 @@ class Blokus:
                 yoffset += cellsize//2 + (abs(piece.get_piece_bounds()[0]) * cellsize)
             xoffset += (maxX*cellsize)+cellsize
     
-
+    def is_game_over(self):
+        return all([player.game_over for player in self.players])
+    
     def play(self):
-        while True:
+        while not self.is_game_over():
             if self.handle_input():
                 break
             self.draw()
@@ -158,9 +185,9 @@ class Blokus:
         
     
     def draw_selected(self):
-        if self.selected_piece is not None:
+        if self.selected_name is not None:
             for piece in self.players[self.current_player].pieces:
-                if piece.name == self.selected_piece:
+                if piece.name == self.selected_name:
                     if self.selected is not None:
                         _x, _y = pygame.mouse.get_pos()
                         x, y = self.snap_xy_to_grid(_x, _y)
