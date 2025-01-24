@@ -1,6 +1,6 @@
 from typing import List, Tuple
 import pygame
-
+from constants import *
 class Piece:
     def __init__(self, name, shape: List[Tuple[int, int]]):
         self.name = name
@@ -56,4 +56,13 @@ class Piece:
         -------
         Tuple[int, int, int, int]: minx, maxx, miny, maxy"""
         return min([c[1] for c in self.shape]), max([c[1] for c in self.shape]), min([c[0] for c in self.shape]), max([c[0] for c in self.shape])
+
+    def from_dict(inp: dict):
+        new_piece = Piece(inp['name'], PIECES[inp['name']])
+        if inp['h']:
+            new_piece.flipHorizontal()
+        if inp['w']:
+            new_piece.flipHorizontal()
+        new_piece.rotateD(inp.get('r', 0)*90)
+        return new_piece
 

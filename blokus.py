@@ -44,9 +44,11 @@ class Blokus:
                     if piece.check_collision(event.pos[0], event.pos[1]):
                         self.selected_name = piece.name
                         self.selected = Piece(piece.name, piece.shape)
-                        #print("Collision")
-            if self.selected is not None:
-                if event.type == pygame.KEYDOWN:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_BACKSLASH:
+                    self.board.any_remaining_moves(self.players[self.current_player])
+
+                if self.selected is not None:
                     if event.key == pygame.K_a:
                         self.selected.rotateD(270)
                     elif event.key == pygame.K_d:
@@ -61,10 +63,7 @@ class Blokus:
                         # if move is successful
                         if self.make_player_move():
                             self.next_player()
-
-                        
-                        
-                        print("K_SPACE")
+                    
 
 
     def next_player(self):
@@ -73,7 +72,22 @@ class Blokus:
             # clear currently selected
             # move up players
             # increase the turncount if its gone full circle
+            if self.players[self.current_player].game_over:
+                self.selected_name = None
+                self.selected = None
+
+                self.current_player += 1
+                if self.current_player >= len(self.players):
+                    self.current_player = 0
+                    self.turncount += 1
+                return 
             self.players[self.current_player].remove_piece(self.selected_name)
+            if not self.board.any_remaining_moves(self.players[self.current_player]):
+                self.players[self.current_player].game_over = True
+                print(f"Player {self.current_player} is out of moves.")
+            if len(self.players[self.current_player].pieces) == 0:
+                self.players[self.current_player].game_over = True
+                print(f"Player {self.current_player} has no more pieces.")
 
             self.selected_name = None
             self.selected = None
@@ -82,7 +96,10 @@ class Blokus:
             if self.current_player >= len(self.players):
                 self.current_player = 0
                 self.turncount += 1
-            pass
+            if self.players[self.current_player].game_over:
+                self.next_player()
+        
+            
 
     def make_player_move(self):
         
@@ -143,10 +160,9 @@ class Blokus:
         for n, player in enumerate(self.players):
             yoffset = self.ui_config['remaining_offset']
             for piece in player.pieces:
-                color = player.color if n == self.current_player else GREY
-                if piece.name != self.selected_name:
-                    color = color.grayscale()
-                #print(piece.shape)
+                color = (player.color+pygame.Color(127, 127, 127)) if n == self.current_player else GREY
+                if piece.name == self.selected_name and player.id == self.players[self.current_player].id:
+                    color = player.color
                 minY = min([c[0] for c in piece.shape])
                 minX = min([c[1] for c in piece.shape])
                 maxX = max(maxX, piece.get_piece_bounds()[1])
@@ -162,6 +178,12 @@ class Blokus:
             if self.handle_input():
                 break
             self.draw()
+        
+        for player in sorted(self.players, key=lambda x:x.calculate_score()):
+            print(f"Player {player.id} with {player.calculate_score()}")
+        
+
+
     
     
     def to_grid_coords(self, x, y) -> Tuple[int, int]:
@@ -194,11 +216,10 @@ class Blokus:
                         gridx, gridy = self.to_grid_coords(x, y)
                         pygame.display.set_caption(f"{_x}, {_y} -> {gridx}, {gridy}")
                         self.selected.draw(self.display, x, y, self.ui_config['grid_cellsize'], self.players[self.current_player].color)
-
-
-            
+    
     def draw(self):
         self.display.fill(WHITE)
+        pygame.display.set_caption(f"CURRENT TURN: Player {self.current_player}")
         self.draw_selected()
         self.draw_remaining()
         self.draw_board()
