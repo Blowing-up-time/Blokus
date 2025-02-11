@@ -10,6 +10,9 @@ class Piece:
         self.xbounds = 0
         self.ybounds = 0
         self.recalculate_piece_bounds()
+        self.rotation = 0
+        self.flipped_hor = False
+        self.flipped_ver = False
     
     def draw(self, display: pygame.Surface, x, y, cellsize, color):
         rects = []  
@@ -46,14 +49,17 @@ class Piece:
             pass
         else:
             raise Exception(f"Tried to rotate the piece by {deg}. This is shit try again.")
+        self.rotation = (self.rotation+deg) % 360
         self.recalculate_piece_bounds()
     
     def flipVertical(self):
         self.shape = np.column_stack((-self.shape[:, 0], self.shape[:, 1]))
+        self.flipped_ver = not self.flipped_ver
         self.recalculate_piece_bounds()
 
     def flipHorizontal(self):
         self.shape = np.column_stack((self.shape[:, 0], -self.shape[:, 1]))
+        self.flipped_hor = not self.flipped_hor
         self.recalculate_piece_bounds()
 
     def get_piece_sides(self) -> Tuple[int, int, int, int]: 
