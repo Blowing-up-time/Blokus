@@ -1,11 +1,15 @@
 from typing import List, Tuple
 import pygame
 from constants import *
+import numpy as np
 class Piece:
-    def __init__(self, name, shape: List[Tuple[int, int]]):
+    def __init__(self, name, shapeDef):
         self.name = name
-        self.shape = shape
+        self.shape = np.array(shapeDef)
         self.rects = []
+        self.xbounds = 0
+        self.ybounds = 0
+        self.recalculate_piece_bounds()
     
     def draw(self, display: pygame.Surface, x, y, cellsize, color):
         rects = []  
@@ -26,43 +30,37 @@ class Piece:
                 return True
         return False
     
-    def get_piece_bounds(self):
+    def recalculate_piece_bounds(self):
 
-        xbounds = abs(max([c[1] for c in self.shape]) - min([c[1] for c in self.shape])) + 1
-        ybounds = abs(max([c[0] for c in self.shape]) - min([c[0] for c in self.shape])) + 1
-        return ybounds, xbounds
+        self.xbounds = abs(np.max(self.shape[:,1]) - np.min(self.shape[:,1])) + 1
+        self.ybounds = abs(np.max(self.shape[:,0]) - np.min(self.shape[:,0])) + 1
     
     def rotateD(self, deg):
         if deg == 90:
-            self.shape = [(x, -y) for y, x in self.shape]
+            self.shape = np.column_stack((self.shape[:, 1], -self.shape[:, 0]))
         elif deg == 180:
-            self.shape = [(-y, -x) for y, x in self.shape]
+            self.shape = np.column_stack((-self.shape[:, 0], -self.shape[:, 1]))
         elif deg == 270:
-            self.shape = [(-x, y) for y, x in self.shape]
+            self.shape = np.column_stack((-self.shape[:, 1], self.shape[:, 0]))
         elif deg == 0 or deg == 360:
             pass
         else:
-            raise Exception(f"Tried to rotate the piece by {deg}. This is shit.")
+            raise Exception(f"Tried to rotate the piece by {deg}. This is shit try again.")
+        self.recalculate_piece_bounds()
     
     def flipVertical(self):
-        self.shape = [(-y, x) for y, x in self.shape]
+        self.shape = np.column_stack((-self.shape[:, 0], self.shape[:, 1]))
+        self.recalculate_piece_bounds()
 
     def flipHorizontal(self):
-        self.shape = [(y, -x) for y, x in self.shape]
+        self.shape = np.column_stack((self.shape[:, 0], -self.shape[:, 1]))
+        self.recalculate_piece_bounds()
 
     def get_piece_sides(self) -> Tuple[int, int, int, int]: 
         """
         Returns
         -------
         Tuple[int, int, int, int]: minx, maxx, miny, maxy"""
-        return min([c[1] for c in self.shape]), max([c[1] for c in self.shape]), min([c[0] for c in self.shape]), max([c[0] for c in self.shape])
-
-    def from_dict(inp: dict):
-        new_piece = Piece(inp['name'], PIECES[inp['name']])
-        if inp['h']:
-            new_piece.flipHorizontal()
-        if inp['w']:
-            new_piece.flipHorizontal()
-        new_piece.rotateD(inp.get('r', 0)*90)
-        return new_piece
+        return np.min(self.shape[:, 1]), np.max(self.shape[:, 1]), np.min(self.shape[:, 0]), np.max(self.shape[:, 0])
+    
 

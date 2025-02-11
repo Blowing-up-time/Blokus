@@ -10,8 +10,8 @@ class Player:
         self.pieces: List[Piece] = []
         self.game_over = False
 
-        for name, shape in PIECES.items():
-            self.pieces.append(Piece(name, shape))
+        for name, shapeDef in PIECES.items():
+            self.pieces.append(Piece(name, shapeDef[0]))
         self.starting_score = sum([len(x.shape) for x in self.pieces])
     
 

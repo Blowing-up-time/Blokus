@@ -1,6 +1,9 @@
 from player import Player
 from constants import *
 from blokus import Blokus
+from cProfile import Profile
+from pstats import SortKey, Stats
+
 
 if __name__ == "__main__":
     pygame.init()
@@ -10,8 +13,8 @@ if __name__ == "__main__":
     playerYellow = Player(4, YELLOW)
 
     #playerList = [playerRed]
-    #playerList = [playerRed, playerBlue]
-    playerList = [playerRed, playerBlue, playerGreen, playerYellow]
+    playerList = [playerRed, playerBlue]
+    #playerList = [playerRed, playerBlue, playerGreen, playerYellow]
 
     config = {
         'grid_offset': 20,
@@ -19,8 +22,11 @@ if __name__ == "__main__":
         'remaining_offset': 20,
         'remaining_overflow': 620,
         'remaining_cellsize': 10,
-        'score_offset': (620, 40)
+        'score_offset': (620, 40),
+        'render': True
     }
 
     game = Blokus(playerList, 1200, 800, config)
-    game.play()
+    with Profile(timeunit=0.0001) as profile:
+        game.play()
+        Stats(profile).strip_dirs().sort_stats(SortKey.CUMULATIVE).print_stats()
